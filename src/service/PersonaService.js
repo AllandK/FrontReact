@@ -7,4 +7,9 @@ getAll(){
     return axios.get(this.baseUrl).then(res => res.data);
 }
 
+
+save(usuario){
+    return axios.post(this.baseUrl , usuario).then(res => res.data);
+}
+
 }
