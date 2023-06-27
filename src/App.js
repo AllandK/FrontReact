@@ -12,6 +12,7 @@ import {Menubar} from 'primereact/menubar';
 import {Dialog} from 'primereact/dialog';
 import {InputText} from 'primereact/inputtext';
 import {Button} from 'primereact/button';
+import { Messages } from 'primereact/messages';
 
 
 export default class App extends Component{
@@ -26,8 +27,13 @@ this.state = {
      prioridad : 1,
      estado :1
     
+   },
+   selectedPersona : {
+
    }
 };
+
+  
 this.items = [
  {
   label : 'Nuevo',
@@ -38,17 +44,18 @@ this.items = [
  {
   label : 'Editar',
   icon : 'pi pi-fw pi-pencil',
-  command : () => {alert('Modificado!')}
+  command : () => {this.showEditDialog()}
  },
  
  {
   label : 'Eliminar',
   icon : 'pi pi-fw pi-trash',
-  command : () => {alert('Borrado!')}
+  command : () => {this.delete()}
  }
 ];
 this.personaService = new PersonaService();
 this.save = this.save.bind(this);
+this.delete = this.delete.bind(this);
 this.footer = (
 <div>
   <Button label="Guardar" icon="pi pi-check" onClick={this.save} />
@@ -76,10 +83,21 @@ save(){
        
       }}
     );
-    alert('Usuario creado exitosamente!');
-    this.personaService.getAll().then(data =>this.setState({usuarios : data}) )
+this.messages.show({severity: 'success', summary: 'Alerta', detail: 'Se guardó el usuario correctamente!'});
+this.personaService.getAll().then(data =>this.setState({usuarios : data}) )
   })
 }
+
+delete(){
+  if(window.confirm("¿Realmente desea eliminar el registro?")){
+    this.personaService.delete(this.state.selectedPersona.id).then(data => {
+      this.messages.show({severity: 'success', summary: 'Alerta', detail: 'Se eliminó el usuario correctamente!'});
+      this.personaService.getAll().then(data =>this.setState({usuarios : data}) )
+    }
+      )
+  }
+}
+
 
 render(){
   return(
@@ -87,7 +105,7 @@ render(){
   <Menubar model ={this.items}/>
   <br/>
   <Panel header="React CRUD app" >
-    <DataTable value={this.state.usuarios}> 
+    <DataTable value={this.state.usuarios} selectionMode="single" selection={this.state.selectedPersona} onSelectionChange={ e => this.setState({selectedPersona : e.value})}> 
     <Column field="id" header="ID" ></Column>
     <Column field="nombre" header="NOMBRE" ></Column>
     <Column field="email" header="EMAIL" ></Column>
@@ -96,6 +114,7 @@ render(){
     </DataTable>
   </Panel>
   <Dialog header="Crear usuario" visible={this.state.visible} footer={this.footer} style={{ width: '400px' }} modal={true} onHide={() => this.setState({visible: false}) }>
+    <form id="persona-form">
     <span className='p-float-label'>
     <InputText style={{width : '100%'}} value={this.state.usuario.nombre} id='nombre' 
      onChange={(e) => this.setState(prevState => {
@@ -136,8 +155,9 @@ render(){
       })} />
     <label htmlFor='estado'>Estado</label>
     </span>
+    </form> 
   </Dialog>
-
+  <Messages ref={(el) => this.messages = el} />
   </div>
   );
 }
@@ -153,6 +173,24 @@ showSaveDialog(){
       estado :1
      
     }
-  })
+  });
+
 }
+showEditDialog(){
+  this.setState({
+    visible : true,
+    usuario :{
+      id : this.state.selectedPersona.id,
+      nombre : this.state.selectedPersona.nombre,
+      email :  this.state.selectedPersona.email,
+      prioridad : this.state.selectedPersona.prioridad,
+      estado : this.state.selectedPersona.estado
+     
+    }
+  }
+
+  )
+}
+
+
 }
